@@ -580,7 +580,7 @@ function renderHtml(){
   }
   closeList();
 
-  const changeHistory='<h2 class="section" id="change-history"><a class="anchor" href="#change-history">Change History</a></h2>\n<div class="changelog">\n<p><strong>Version 1.0</strong> \u2014 June 2026. Initial publication.</p>\n</div>\n';
+  const changeHistory='<h2 class="section" id="change-history"><a class="anchor" href="#change-history">Change History</a></h2>\n<div class="changelog">\n<p><strong>Version 1.1</strong> \u2014 June 2026. Added a short summary companion page (summary.html), linked from the masthead. No changes to the analysis.</p>\n<p><strong>Version 1.0</strong> \u2014 June 2026. Initial publication.</p>\n</div>\n';
   const disclaimer='<h2 class="section" id="disclaimer"><a class="anchor" href="#disclaimer">Disclaimer</a></h2>\n<p class="disclaimer-full">This is an independent analysis. The author is not affiliated with, employed by, endorsed by, or sponsored by any of the companies named in it \u2014 SpaceX and Starlink, Amazon and Kuiper, OneWeb, Telesat, Iridium, the Chinese state operators, or any of the launch providers and telecommunications firms mentioned \u2014 and holds no financial position, long or short, in any of them or their parent companies. The author is likewise unaffiliated with the universities, agencies, and research groups whose atmospheric, orbital-debris, and related findings are cited here; that work is referenced solely to represent its published results. Company and product names are used only for identification, analysis, and commentary, and remain the trademarks of their respective owners.</p>\n';
   const pdfBottom='<p class="download-links bottom"><a href="starlink-math.pdf">\u2193 Download PDF</a></p>\n';
 
@@ -628,7 +628,8 @@ tr.alt td{background:var(--alt);}
 .download-links.bottom{margin-top:2.4rem;}
 @media print{
 body{max-width:none;font-size:11pt;color:#000;padding:0;}
-nav.toc,.download-links{display:none;}
+.altview{font-size:.85rem;margin:.35rem 0 0;}
+nav.toc,.download-links,.altview{display:none;}
 a{color:#000;text-decoration:none;}
 h1,h2,h3{color:#000;}
 h2.section{border-bottom-color:#000;}
@@ -660,6 +661,7 @@ tr.alt td{background:#eee !important;-webkit-print-color-adjust:exact;print-colo
     +'<p class="subtitle">Economics, Launch Cadence, Orbital Risk, Atmospheric Externalities, and a Sustainable Path</p>\n'
     +'<p class="meta">A working analysis \u00B7 June 2026 \u00B7 Nick Peelman \u00B7 Version 1.0</p>\n'
     +'<p class="download-links top"><a href="starlink-math.pdf">\u2193 Download PDF</a></p>\n'
+    +'<p class="altview"><a href="summary.html">In a hurry? Read the short version \u2192</a></p>\n'
     +'<p class="indep">Independent analysis \u2014 the author has no affiliation with, and no financial position in, any company or research group named here. Full disclosure at the end.</p>\n'
     +'</header>\n<main>\n'+body+changeHistory+disclaimer+pdfBottom+'</main>\n</body>\n</html>\n';
 }
@@ -699,12 +701,126 @@ const doc = new Document({
   }]
 });
 
+// ===================== SUMMARY EMITTER (the "/summary" companion page) =====================
+// Self-contained short page. Shares the palette/feel of the paper but has its own, simpler
+// stylesheet (no TOC / notes / tables), plus a call-to-action linking to the full paper.
+
+function sInline(text){
+  // mini-markdown for the summary: **bold**, *italic*, [text](url)
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\([^)]+\))/g);
+  return parts.filter(p=>p.length).map(p=>{
+    if(p.startsWith('**')&&p.endsWith('**')) return '<strong>'+esc(p.slice(2,-2))+'</strong>';
+    if(p.startsWith('*')&&p.endsWith('*')&&p.length>2) return '<em>'+esc(p.slice(1,-1))+'</em>';
+    const m=p.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if(m) return '<a href="'+esc(m[2])+'">'+esc(m[1])+'</a>';
+    return esc(p);
+  }).join('');
+}
+
+const SUMMARY_TITLE = "Starlink: The Rockets Work. The Math Doesn\u2019t.";
+const SUMMARY_DESC  = "The five-minute version of The Starlink Math Problem: launch is the part SpaceX solved \u2014 the economics, the orbital commons, and the atmosphere are the real questions.";
+
+// Body blocks. {p: "..."} paragraph, {lede: "..."} opening line, {cta:true} call-to-action box.
+const SUMMARY_BODY = [
+  {lede:"Almost every argument about Starlink is about the wrong thing."},
+  {p:"The usual debate is about launch: how many satellites it takes, how big the rockets are, how fast SpaceX can fly them. By that measure the whole enterprise looks impossible \u2014 tens of thousands of satellites, replaced forever. But launch cadence is the part SpaceX actually solved. Reusable Falcon 9s made orbit cheap and routine. If you\u2019re hunting for the thing that doesn\u2019t work, you\u2019re staring at the one part that does."},
+  {p:"The problems that matter are quieter, and none of them are about rockets."},
+  {p:"**Start with the money.** A Starlink satellite lasts about five years, then burns up on the way down by design. That\u2019s not a footnote \u2014 it\u2019s the whole economic shape. A constellation has to replace roughly a fifth of itself every single year just to stand still. Not to grow. To *stay the same size.* SpaceX\u2019s own audited filings show the connectivity capital spend climbing: $2.46 billion in 2023, $3.50 billion in 2024, $4.18 billion in 2025, and $1.33 billion in the first quarter of 2026 alone. That\u2019s not a one-time build cost you pay down. It\u2019s a fire you feed forever."},
+  {p:"Compare it to the thing it claims to replace. Fiber laid in the ground in the 1980s still carries traffic today. When it needs more capacity, you swap the electronics on each end and leave the glass alone. Fiber separates the part that lasts decades from the part you upgrade. Starlink welds them into a single disposable object that falls out of the sky on a five-year clock. One architecture amortizes; the other incinerates."},
+  {p:"**Then there\u2019s the neighborhood.** Low Earth orbit broadband lives in a thin shell a few hundred kilometers up \u2014 proportionally thinner, wrapped around the Earth, than the skin on an apple. It\u2019s a shared, finite, barely-policed volume, and right now SpaceX, Amazon, China, and several others are all racing to cram it full at once. There\u2019s no air-traffic control up there. In 2009 a dead Russian satellite slammed into a working Iridium one and shattered both \u2014 and Iridium had done everything right. That\u2019s the warning in one event: in a commons with no referee, behaving responsibly doesn\u2019t save you from everyone who doesn\u2019t."},
+  {p:"**And then there\u2019s the part nobody measured first.** When these satellites die, they vaporize in the upper atmosphere, seeding the stratosphere with aluminum and other metals. Direct sampling up there now finds spacecraft metal in roughly one in ten of the particles measured \u2014 and we\u2019re scaling that injection up sharply before anyone understands what it does to the ozone layer or the climate. We\u2019re running the experiment and reading the results later."},
+  {p:"Here\u2019s the part that should bother the boosters most: **none of this is unique to Starlink.** Amazon\u2019s Kuiper, the Chinese state constellations, OneWeb, Telesat \u2014 every one of them is signing up for the same five-year treadmill, the same crowded shell, the same metal in the sky. Starlink is just the leading indicator. The whole field is on course to build, launch, and deliberately burn up satellites worth tens of billions of dollars a year, indefinitely, just to keep the lights on."},
+  {p:"And there is a great deal riding on the optimistic version of this story. In June 2026 SpaceX went public in the largest IPO in history, near a $1.77 trillion valuation \u2014 pitched substantially on Starlink as a broadband business that competes with terrestrial fiber across the whole populated world. That premise is exactly what the full paper weighs against the company\u2019s own filings. *This is an independent analysis, not investment advice \u2014 no position, no prediction; only a question about whether the math under the story holds.*"},
+  {p:"So is the technology bad? No. And that\u2019s the actual point."},
+  {p:"There\u2019s a version of this that makes complete sense: fewer satellites, longer-lived, responsibly disposed of, aimed at the places nothing on the ground can reach \u2014 oceans, poles, aircraft, the real backcountry. It already exists. Iridium has run that model, profitably, for decades. Satellite broadband is a brilliant answer to *\u201Chow do I get a signal in the middle of nowhere.\u201D* It\u2019s a poor answer to *\u201Chow do I replace fiber for everyone.\u201D* The trouble is it\u2019s being built, sold, and valued as the second when the physics, the economics, and the atmosphere all say it\u2019s only ever the first."},
+  {p:"That\u2019s the Starlink math problem. The rockets work. The business case for draping a private, disposable internet over the entire populated planet is the part that doesn\u2019t close."},
+  {cta:true},
+];
+
+const SUMMARY_CSS = `:root{color-scheme:light;--accent:#1F4E79;--grey:#595959;--line:#d8dee9;}
+*{box-sizing:border-box;}
+body{max-width:720px;margin:0 auto;padding:2.6rem 1.2rem 4rem;line-height:1.7;font-size:19px;
+font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#161616;background:#fff;}
+.masthead{border-bottom:3px solid var(--accent);padding-bottom:1.1rem;margin-bottom:1.8rem;}
+h1{line-height:1.18;color:var(--accent);font-weight:800;font-size:2.15rem;margin:0 0 .4rem;letter-spacing:-.01em;}
+.subtitle{font-size:1.08rem;color:var(--grey);margin:.2rem 0 .5rem;}
+.meta{color:var(--grey);font-size:.9rem;margin:.2rem 0;}
+.indep{font-size:.82rem;color:var(--grey);margin-top:.7rem;font-style:italic;}
+a{color:#0b5cad;text-decoration:none;}
+a:hover{text-decoration:underline;}
+p{margin:0 0 1.15rem;}
+p.lede{font-size:1.32rem;line-height:1.4;font-weight:600;color:#111;margin:.4rem 0 1.3rem;}
+strong{font-weight:700;}
+.topnav{margin:.7rem 0 0;}
+.topnav a{display:inline-block;border:1px solid var(--accent);color:var(--accent);padding:.3rem .8rem;border-radius:4px;font-size:.9rem;}
+.cta{border:1px solid var(--accent);background:#f4f7fb;border-radius:8px;padding:1.2rem 1.3rem;margin:2.2rem 0 0;}
+.cta p{margin:0 0 .8rem;font-size:1.02rem;}
+.cta .buttons a{display:inline-block;background:var(--accent);color:#fff;padding:.5rem 1.05rem;border-radius:5px;font-size:.98rem;font-weight:600;margin-right:.6rem;}
+.cta .buttons a.secondary{background:#fff;color:var(--accent);border:1px solid var(--accent);font-weight:500;}
+footer{margin-top:2.6rem;border-top:1px solid var(--line);padding-top:1rem;}
+footer .disclaimer{font-size:.84rem;color:var(--grey);}
+footer .ver{font-size:.8rem;color:var(--grey);margin-top:.6rem;}
+@media print{
+body{max-width:none;font-size:11pt;color:#000;padding:0;}
+.topnav,.cta .buttons{display:none;}
+a{color:#000;text-decoration:none;}
+h1{color:#000;}
+}`;
+
+function renderSummaryHtml(){
+  let body='';
+  for(const b of SUMMARY_BODY){
+    if(b.lede) body+='<p class="lede">'+sInline(b.lede)+'</p>\n';
+    else if(b.cta){
+      body+='<div class="cta">\n'
+        +'<p>Want the whole thing \u2014 every figure sourced, every claim end-noted, the filings, the orbital mechanics, the atmospheric papers? It is a long read. Bring coffee.</p>\n'
+        +'<p class="buttons"><a href="./">Read the full paper \u2192</a><a class="secondary" href="starlink-math.pdf">Download PDF</a></p>\n'
+        +'</div>\n';
+    } else body+='<p>'+sInline(b.p)+'</p>\n';
+  }
+
+  const head='<!DOCTYPE html>\n'
+    +'<!-- The Starlink Math Problem (summary). Copyright (c) 2026 Nick Peelman.\n'
+    +'     Paper text licensed CC BY-ND 4.0. Source: https://github.com/peelman/starlink-math -->\n'
+    +'<html lang="en">\n<head>\n'
+    +'<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+    +'<title>'+esc(SUMMARY_TITLE)+'</title>\n'
+    +'<meta name="description" content="'+esc(SUMMARY_DESC)+'">\n'
+    +'<meta name="author" content="Nick Peelman">\n'
+    +'<link rel="canonical" href="https://starlink-math.peelman.us/summary.html">\n'
+    +'<link rel="license" href="https://creativecommons.org/licenses/by-nd/4.0/">\n'
+    +'<meta property="og:title" content="'+esc(SUMMARY_TITLE)+'">\n'
+    +'<meta property="og:description" content="'+esc(SUMMARY_DESC)+'">\n'
+    +'<meta property="og:type" content="article">\n'
+    +'<meta property="og:url" content="https://starlink-math.peelman.us/summary.html">\n'
+    +'<meta name="twitter:card" content="summary">\n'
+    +'<meta name="twitter:title" content="'+esc(SUMMARY_TITLE)+'">\n'
+    +'<meta name="twitter:description" content="'+esc(SUMMARY_DESC)+'">\n'
+    +'<style>\n'+SUMMARY_CSS+'\n</style>\n</head>\n';
+
+  return head+'<body>\n'
+    +'<header class="masthead">\n'
+    +'<h1>'+esc(SUMMARY_TITLE)+'</h1>\n'
+    +'<p class="subtitle">The short version. The full paper is one click away.</p>\n'
+    +'<p class="meta">An independent analysis \u00B7 June 2026 \u00B7 Nick Peelman</p>\n'
+    +'<p class="topnav"><a href="./">Read the full paper \u2192</a></p>\n'
+    +'<p class="indep">Independent analysis \u2014 the author has no affiliation with, and no financial position in, any company or research group named here.</p>\n'
+    +'</header>\n<main>\n'+body+'</main>\n'
+    +'<footer>\n'
+    +'<p class="disclaimer">This is an independent critical analysis. It is not affiliated with, endorsed by, or sponsored by any company named here, and the author holds no financial position, long or short, in any of them. Company and product names are trademarks of their respective owners, used only for identification and commentary.</p>\n'
+    +'<p class="ver">A companion to <a href="./">The Starlink Math Problem</a> \u00B7 v1.1 \u00B7 June 2026</p>\n'
+    +'</footer>\n</body>\n</html>\n';
+}
+
+
 const buildDocx = () => Packer.toBuffer(doc).then(buffer => {
   fs.writeFileSync(path.join(OUT_DIR, "starlink_analysis.docx"), buffer);
   console.log("wrote starlink_analysis.docx");
 });
 const buildHtml = () => { fs.writeFileSync(path.join(OUT_DIR, "index.html"), renderHtml()); console.log("wrote index.html"); };
+const buildSummary = () => { fs.writeFileSync(path.join(OUT_DIR, "summary.html"), renderSummaryHtml()); console.log("wrote summary.html"); };
 (async () => {
-  if (OUT === 'docx' || OUT === 'both') await buildDocx();
-  if (OUT === 'html' || OUT === 'both') buildHtml();
+  if (OUT === 'docx' || OUT === 'both' || OUT === 'all') await buildDocx();
+  if (OUT === 'html' || OUT === 'both' || OUT === 'all') buildHtml();
+  if (OUT === 'summary' || OUT === 'all') buildSummary();
 })();

@@ -33,6 +33,8 @@ out of sync between a Word document and a web page. `build.js` is the single sou
 node build.js          # both index.html and starlink_analysis.docx (default)
 node build.js html     # index.html only
 node build.js docx     # starlink_analysis.docx only
+node build.js summary  # summary.html only (the short companion page)
+node build.js all      # index.html + starlink_analysis.docx + summary.html
 ```
 
 Outputs are written to the current working directory. To write elsewhere:
@@ -143,6 +145,7 @@ LICENSE-CONTENT.md       # CC BY-ND 4.0 (paper text)
 .gitignore
 # build products (generated — gitignored by default):
 index.html
+summary.html
 starlink_analysis.docx
 starlink-math.pdf
 ```
