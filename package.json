@@ -1,0 +1,22 @@
+{
+  "name": "starlink-math",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Single-source build pipeline for the technical position paper 'The Starlink Math Problem' (https://starlink-math.peelman.us/).",
+  "author": "Nick Peelman",
+  "license": "SEE LICENSE IN LICENSE",
+  "main": "build.js",
+  "scripts": {
+    "build": "node build.js both",
+    "build:html": "node build.js html",
+    "build:docx": "node build.js docx",
+    "pdf": "bash build-pdf.sh",
+    "clean": "rm -f index.html starlink_analysis.docx starlink-math.pdf"
+  },
+  "dependencies": {
+    "docx": "^9.6.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
